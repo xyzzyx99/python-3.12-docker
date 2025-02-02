@@ -21,8 +21,22 @@ RUN set -eux; \
 		libbluetooth-dev \
 		tk-dev \
 		uuid-dev \
+		vim \
+		openssh-server \
 	; \
 	rm -rf /var/lib/apt/lists/*
+
+#RUN mkdir /var/run/sshd; \
+#	echo 'root:root' | chpasswd; \
+#	sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config; \
+#	useradd user; \
+#	echo 'user:user' | chpasswd; \
+#	mkdir /home/user; \
+#	chown user /home/user; \
+#	chmod 0700 /home/user
+
+EXPOSE 22 8888
+#EXPOSE 8888
 
 ENV GPG_KEY 7169605F62C751356D054A26A821E680E5FA6305
 ENV PYTHON_VERSION 3.12.8
@@ -96,6 +110,22 @@ RUN set -eux; \
 	python3 --version; \
 	pip3 --version
 
+COPY requirements.txt /root/
+COPY start.sh /root/
+
+RUN mkdir /var/run/sshd; \
+	echo 'root:root' | chpasswd; \
+	sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config; \
+	useradd user; \
+	echo 'user:user' | chpasswd; \
+	mkdir /home/user; \
+	chown user /home/user; \
+	chmod 0700 /home/user; \
+	cd /root; \
+	pip3 install -r requirements.txt; \
+	chmod 0755 start.sh; \
+	rm requirements.txt
+	
 # make some useful symlinks that are expected to exist ("/usr/local/bin/python" and friends)
 RUN set -eux; \
 	for src in idle3 pip3 pydoc3 python3 python3-config; do \
@@ -105,4 +135,7 @@ RUN set -eux; \
 		ln -svT "$src" "/usr/local/bin/$dst"; \
 	done
 
-CMD ["python3"]
+#CMD ["python3"]
+#CMD [python3]
+ENTRYPOINT ["/root/start.sh"]
+#CMD ["/usr/sbin/sshd"]
