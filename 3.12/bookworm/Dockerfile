@@ -48,7 +48,14 @@ RUN set -eux; \
 	echo "$PYTHON_SHA256 *python.tar.xz" | sha256sum -c -; \
 	wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc"; \
 	GNUPGHOME="$(mktemp -d)"; export GNUPGHOME; \
-	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$GPG_KEY"; \
+#	gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$GPG_KEY"; \
+	if grep -qi microsoft /proc/sys/kernel/osrelease; then \
+#	    	echo "Running in WSL — apply WSL-specific fix"; \
+#	    	do-something-for-wsl; \
+	gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "$GPG_KEY"; \
+	else \
+		gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$GPG_KEY"; \
+	fi; \	
 	gpg --batch --verify python.tar.xz.asc python.tar.xz; \
 	gpgconf --kill all; \
 	rm -rf "$GNUPGHOME" python.tar.xz.asc; \
